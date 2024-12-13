@@ -1,0 +1,79 @@
+import sqlite3
+
+def create_database():
+    """
+    Crea la base de datos y una tabla llamada 'Clientes'.
+    Divide los datos en dos fragmentos horizontales según la región.
+    """
+    # Conexión a las bases de datos fragmentadas
+    db1 = sqlite3.connect('clientes_region1.db')
+    db2 = sqlite3.connect('clientes_region2.db')
+
+    # Crear la tabla en ambas bases de datos
+    for db in (db1, db2):
+        cursor = db.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Clientes (
+                id INTEGER PRIMARY KEY,
+                nombre TEXT NOT NULL,
+                region TEXT NOT NULL
+            )
+        ''')
+        db.commit()
+
+    db1.close()
+    db2.close()
+
+def insert_clientes():
+    """
+    Inserta clientes en la base de datos adecuada según su región.
+    """
+    clientes = [
+        (1, "Alice", "Norte"),
+        (2, "Bob", "Sur"),
+        (3, "Carlos", "Norte"),
+        (4, "Diana", "Sur")
+    ]
+
+    db1 = sqlite3.connect('clientes_region1.db')
+    db2 = sqlite3.connect('clientes_region2.db')
+
+    for cliente in clientes:
+        if cliente[2] == "Norte":
+            db = db1
+        else:
+            db = db2
+
+        cursor = db.cursor()
+        cursor.execute('INSERT INTO Clientes (id, nombre, region) VALUES (?, ?, ?)', cliente)
+        db.commit()
+
+    db1.close()
+    db2.close()
+
+def query_clientes(region):
+    """
+    Consulta clientes de una región específica.
+    """
+    if region == "Norte":
+        db = sqlite3.connect('clientes_region1.db')
+    elif region == "Sur":
+        db = sqlite3.connect('clientes_region2.db')
+    else:
+        print("Región no válida.")
+        return
+
+    cursor = db.cursor()
+    cursor.execute('SELECT * FROM Clientes')
+    clientes = cursor.fetchall()
+    db.close()
+
+    print(f"Clientes en la región {region}:")
+    for cliente in clientes:
+        print(cliente)
+
+if __name__ == "__main__":
+    create_database()
+    insert_clientes()
+    query_clientes("Norte")
+    query_clientes("Sur")
